@@ -13,7 +13,7 @@ import Combine
 
 public protocol APIClient {
     func get<T: Decodable> (url: URL, headers: HTTPHeaders?) -> AnyPublisher<T,Error>
-     
+  
 }
 
 
@@ -25,6 +25,11 @@ public final class GeoCueAPIClient:APIClient {
     
     
     public func get<T: Sendable>(url: URL, headers: HTTPHeaders?) -> AnyPublisher<T, any Error> where T: Decodable {
+        guard ConnectivityManager.shared.isConnected else {
+                    return Fail(error: NetworkError.noInternet)
+                        .eraseToAnyPublisher()
+                }
+                
         // Create the request
         var request = URLRequest(url: url)
         request.method = .get
@@ -34,13 +39,12 @@ public final class GeoCueAPIClient:APIClient {
         
         // Use the Alamofire session to perform the request
         return currentSession.request(request)
-            .validate() // Validate the response (optional)
-            .publishDecodable(type: T.self)
-            .value() // Extract the decoded value
-            .mapError { error -> Error in
-                // Map Alamofire errors to a generic Error type
-                return error as Error
-            }
-            .eraseToAnyPublisher()
+                    .validate() // Optionally validate the response.
+                    .publishDecodable(type: T.self)
+                    .value() // Extract the decoded value.
+                    .mapError { $0.asNetworkError() }
+                    .eraseToAnyPublisher()
     }
 }
+
+

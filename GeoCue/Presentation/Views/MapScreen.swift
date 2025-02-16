@@ -14,6 +14,8 @@ struct MapScreen: View {
     @StateObject var viewModel: LocationViewModel = Container.shared.locationViewModel()
     @StateObject private var userLocationManager = Container.shared.locationManager()
     private var dataController = Container.shared.dataController()
+    @StateObject private var connectivityManager = ConnectivityManager.shared
+
 
     // Use a binding for the camera position so updates animate the map.
     @State private var cameraPosition: MapCameraPosition = .automatic
@@ -170,6 +172,15 @@ struct MapScreen: View {
                 .frame(maxWidth: .infinity)
                 .background(.thinMaterial)
 
+            }
+        }
+        .overlay {
+            if !connectivityManager.isConnected {
+                NoInternetBannerView(retryAction: {
+                    connectivityManager.retryConnectionCheck()
+                })
+                .transition(.move(edge: .bottom))
+                .animation(.easeInOut, value: connectivityManager.isConnected)
             }
         }
         // Present the half sheet listing all annotations.
