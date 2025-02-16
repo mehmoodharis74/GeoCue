@@ -11,10 +11,10 @@ import MapKit
 import Factory
 
 class LocationViewModel: ObservableObject {
-    private let fetchLocationsUseCase: FetchLocationsUseCase
-    private let fetchSavedLocationsUseCase: FetchSavedLocationsUseCase
-    private let saveLocationUseCase: SaveLocationUseCase
-    private let updateLocationIsActiveUseCase: UpdateLocationIsActiveUseCase
+    private let fetchLocationsUseCase: FetchLocationsUseCaseProtocol
+    private let fetchSavedLocationsUseCase: FetchSavedLocationsUseCaseProtocol
+    private let saveLocationUseCase: SaveLocationUseCaseProtocol
+    private let updateLocationIsActiveUseCase: UpdateLocationIsActiveUseCaseProtocol
     private var cancellables = Set<AnyCancellable>()
     
     @Published var locations: [LocationResponseEntity] = []
@@ -22,15 +22,15 @@ class LocationViewModel: ObservableObject {
     @Published var errorMessage: String? = nil
     @Published var isLoading: Bool = false
 
-    init(fetchLocationsUseCase: FetchLocationsUseCase,
-         fetchSavedLocationsUseCase: FetchSavedLocationsUseCase,
-         saveLocationUseCase: SaveLocationUseCase,
-         updateLocationIsActiveUseCase: UpdateLocationIsActiveUseCase) {
-        self.fetchLocationsUseCase = fetchLocationsUseCase
-        self.fetchSavedLocationsUseCase = fetchSavedLocationsUseCase
-        self.saveLocationUseCase = saveLocationUseCase
-        self.updateLocationIsActiveUseCase = updateLocationIsActiveUseCase
-    }
+    init(fetchLocationsUseCase: FetchLocationsUseCaseProtocol,
+             fetchSavedLocationsUseCase: FetchSavedLocationsUseCaseProtocol,
+             saveLocationUseCase: SaveLocationUseCaseProtocol,
+             updateLocationIsActiveUseCase: UpdateLocationIsActiveUseCaseProtocol) {
+            self.fetchLocationsUseCase = fetchLocationsUseCase
+            self.fetchSavedLocationsUseCase = fetchSavedLocationsUseCase
+            self.saveLocationUseCase = saveLocationUseCase
+            self.updateLocationIsActiveUseCase = updateLocationIsActiveUseCase
+        }
 
     func fetchRemoteLocations() {
         isLoading = true

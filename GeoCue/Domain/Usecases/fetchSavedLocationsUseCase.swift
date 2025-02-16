@@ -7,7 +7,13 @@
 
 import Combine
 
-struct FetchSavedLocationsUseCase {
+
+
+protocol FetchSavedLocationsUseCaseProtocol {
+    func execute() -> AnyPublisher<[Location], Error>
+}
+
+struct FetchSavedLocationsUseCase: FetchSavedLocationsUseCaseProtocol {
     private let repository: LocalLocationRepository
 
     init(repository: LocalLocationRepository) {

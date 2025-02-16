@@ -7,7 +7,12 @@
 
 import Combine
 
-struct UpdateLocationIsActiveUseCase {
+
+protocol UpdateLocationIsActiveUseCaseProtocol {
+    func execute(id: String, isActive: Bool) -> AnyPublisher<Void, Error>
+}
+
+struct UpdateLocationIsActiveUseCase: UpdateLocationIsActiveUseCaseProtocol {
     private let repository: LocalLocationRepository
 
     init(repository: LocalLocationRepository) {
