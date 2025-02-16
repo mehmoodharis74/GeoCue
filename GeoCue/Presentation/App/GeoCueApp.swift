@@ -6,15 +6,20 @@
 //
 
 import SwiftUI
+import Factory
+import Combine
 
 @main
 struct GeoCueApp: App {
-    let persistenceController = PersistenceController.shared
+    @State private var cancellables = Set<AnyCancellable>()
+
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environment(\.managedObjectContext, persistenceController.container.viewContext)
+            // Call the use case
+            
+            MapScreen()
+            
         }
     }
 }

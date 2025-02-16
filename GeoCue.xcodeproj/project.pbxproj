@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		6681F9992D5F1CAF006A610A /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = 6681F9982D5F1CAF006A610A /* Alamofire */; };
+		6681F99C2D5F1D15006A610A /* Factory in Frameworks */ = {isa = PBXBuildFile; productRef = 6681F99B2D5F1D15006A610A /* Factory */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		6681F94F2D5F0EEE006A610A /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -29,9 +34,22 @@
 		6681F9582D5F0EEE006A610A /* GeoCueUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GeoCueUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		6681FA3A2D61FDCC006A610A /* Exceptions for "GeoCue" folder in "GeoCue" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 6681F9382D5F0EE9006A610A /* GeoCue */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		6681F93B2D5F0EE9006A610A /* GeoCue */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				6681FA3A2D61FDCC006A610A /* Exceptions for "GeoCue" folder in "GeoCue" target */,
+			);
 			path = GeoCue;
 			sourceTree = "<group>";
 		};
@@ -52,6 +70,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6681F9992D5F1CAF006A610A /* Alamofire in Frameworks */,
+				6681F99C2D5F1D15006A610A /* Factory in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +132,8 @@
 			);
 			name = GeoCue;
 			packageProductDependencies = (
+				6681F9982D5F1CAF006A610A /* Alamofire */,
+				6681F99B2D5F1D15006A610A /* Factory */,
 			);
 			productName = GeoCue;
 			productReference = 6681F9392D5F0EE9006A610A /* GeoCue.app */;
@@ -195,6 +217,10 @@
 			);
 			mainGroup = 6681F9302D5F0EE9006A610A;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				6681F9972D5F1CAF006A610A /* XCRemoteSwiftPackageReference "Alamofire" */,
+				6681F99A2D5F1D15006A610A /* XCRemoteSwiftPackageReference "Factory" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 6681F93A2D5F0EE9006A610A /* Products */;
 			projectDirPath = "";
@@ -398,6 +424,10 @@
 				DEVELOPMENT_ASSET_PATHS = "\"GeoCue/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = GeoCue/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Needs Permisison for this app to work.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Needs Permisison for this app to work.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -426,6 +456,10 @@
 				DEVELOPMENT_ASSET_PATHS = "\"GeoCue/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = GeoCue/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Needs Permisison for this app to work.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Needs Permisison for this app to work.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -552,6 +586,38 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		6681F9972D5F1CAF006A610A /* XCRemoteSwiftPackageReference "Alamofire" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Alamofire/Alamofire.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.10.2;
+			};
+		};
+		6681F99A2D5F1D15006A610A /* XCRemoteSwiftPackageReference "Factory" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/hmlongco/Factory.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.4.3;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		6681F9982D5F1CAF006A610A /* Alamofire */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6681F9972D5F1CAF006A610A /* XCRemoteSwiftPackageReference "Alamofire" */;
+			productName = Alamofire;
+		};
+		6681F99B2D5F1D15006A610A /* Factory */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6681F99A2D5F1D15006A610A /* XCRemoteSwiftPackageReference "Factory" */;
+			productName = Factory;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 6681F9312D5F0EE9006A610A /* Project object */;
 }
