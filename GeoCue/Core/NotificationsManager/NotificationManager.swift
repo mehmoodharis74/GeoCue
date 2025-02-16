@@ -45,12 +45,10 @@ import Foundation
 import UserNotifications
 
 final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
-    static let shared = NotificationManager()
 
     public override init() {
         super.init()
         UNUserNotificationCenter.current().delegate = self
-        requestAuthorization()
     }
 
     func requestAuthorization() {
@@ -88,7 +86,10 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
     func userNotificationCenter(_ center: UNUserNotificationCenter,
                                 willPresent notification: UNNotification,
                                 withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        // Here, we allow alerts and sound to be displayed even while the app is open.
-        completionHandler([.sound])
+        if #available(iOS 14.0, *) {
+            completionHandler([.banner, .sound])
+        } else {
+            completionHandler([.alert, .sound])
+        }
     }
 }

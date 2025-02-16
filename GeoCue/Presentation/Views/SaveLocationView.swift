@@ -12,12 +12,10 @@ struct SavedLocationsView: View {
     // We'll load saved locations from persistent storage using DataController.
     @Environment(\.dismiss) private var dismiss
     private let dataController: DataController
-    @ObservedObject private var viewModel: LocationViewModel
+    @StateObject private var viewModel: LocationViewModel = Container.shared.locationViewModel()
     
-    init(dataController: DataController = Container.shared.dataController(),
-         viewModel:LocationViewModel = Container.shared.locationViewModel()){
+    init(dataController: DataController = Container.shared.dataController()){
         self.dataController = dataController
-        self.viewModel = viewModel
     }
 
     var body: some View {
@@ -34,9 +32,7 @@ struct SavedLocationsView: View {
                 }
             }
             .onAppear {
-                if (viewModel.savedLocations.isEmpty){
                     viewModel.fetchSavedLocations()
-                }
             }
         }
     }

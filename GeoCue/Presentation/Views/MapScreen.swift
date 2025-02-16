@@ -11,7 +11,7 @@ import MapKit
 import SwiftUI
 
 struct MapScreen: View {
-    @ObservedObject var viewModel: LocationViewModel = Container.shared.locationViewModel()
+    @StateObject var viewModel: LocationViewModel = Container.shared.locationViewModel()
     @StateObject private var userLocationManager = Container.shared.locationManager()
     private var dataController = Container.shared.dataController()
 
@@ -22,7 +22,7 @@ struct MapScreen: View {
     @State private var showAnnotationsSheet: Bool = false
     @State private var showAddLocationSheet: Bool = false
     @State private var showSavedLocationsSheet: Bool = false
-
+    
     var body: some View {
         ZStack {
             // The Map view using a binding for the camera position.
@@ -141,12 +141,14 @@ struct MapScreen: View {
                                         }
                                     }
                                 }
+                                Spacer()
                                 Button("Add Location") {
                                     showAddLocationSheet = true
+        
                                 }
 
                             }
-                            .padding(.bottom, 20)
+                            .padding()
 
                         }
                     } else {
@@ -159,13 +161,7 @@ struct MapScreen: View {
 
                                 showSavedLocationsSheet = true
                             }
-                            Button("Clear") {
-                                do {
-                                    try DataController().clearAllLocations()
-                                } catch {
-                                    print("Error updating location: \(error)")
-                                }
-                            }
+
                         }
                         .padding()
 
@@ -175,19 +171,6 @@ struct MapScreen: View {
                 .background(.thinMaterial)
 
             }
-            // Attach a tap gesture to the Map view background.
-            //            .simultaneousGesture(
-            //                TapGesture().onEnded {
-            //                    // Clear selection only if a marker is currently selected.
-            //                    if selectedLocation != nil {
-            //                        withAnimation {
-            //                            selectedLocation = nil
-            //                            radius = 100
-            //                        }
-            //                    }
-            //                }
-            //            )
-
         }
         // Present the half sheet listing all annotations.
         .sheet(isPresented: $showAnnotationsSheet) {
@@ -207,7 +190,7 @@ struct MapScreen: View {
             .presentationDetents([.medium, .large])
         }
         .fullScreenCover(isPresented: $showAddLocationSheet) {
-            AddLocationView(location: selectedLocation!, radius: radius)
+            AddLocationView(location: $selectedLocation, radius: radius)
         }
         .sheet(isPresented: $showSavedLocationsSheet) {
             SavedLocationsView()

@@ -91,14 +91,16 @@ final class UserLocationManager: NSObject, ObservableObject, CLLocationManagerDe
     private let locationManager: CLLocationManager
     private let dataController: DataController
     private var cancellables = Set<AnyCancellable>()
+    private var notificationManager: NotificationManager
     
     // Cache for saved locations fetched via the use case.
     private var savedLocationsCache: [Location] = []
     
-    public init(dataController: DataController) {
+    public init(dataController: DataController, notificationManager: NotificationManager) {
         self.locationManager = CLLocationManager()
         self.locationManager.desiredAccuracy = kCLLocationAccuracyBest
         self.dataController = dataController
+        self.notificationManager = notificationManager
         super.init()
     }
     
@@ -163,7 +165,7 @@ final class UserLocationManager: NSObject, ObservableObject, CLLocationManagerDe
         guard let newLoc = locations.last else { return }
         DispatchQueue.main.async {
             self.location = newLoc
-            print("Current Location: Latitude = \(newLoc.coordinate.latitude), Longitude = \(newLoc.coordinate.longitude)")
+//            print("Current Location: Latitude = \(newLoc.coordinate.latitude), Longitude = \(newLoc.coordinate.longitude)")
         }
     }
     
@@ -183,7 +185,7 @@ final class UserLocationManager: NSObject, ObservableObject, CLLocationManagerDe
               
         let title = "Inside \(activeLoc.name)"
         let body = activeLoc.note
-        NotificationManager.shared.sendNotification(title: title, body: body)
+        notificationManager.sendNotification(title: title, body: body)
         print("Entered region for \(activeLoc.name)")
     }
     
@@ -194,7 +196,7 @@ final class UserLocationManager: NSObject, ObservableObject, CLLocationManagerDe
               
         let title = "Outside \(activeLoc.name)"
         let body = activeLoc.note
-        NotificationManager.shared.sendNotification(title: title, body: body)
+        notificationManager.sendNotification(title: title, body: body)
         print("Exited region for \(activeLoc.name)")
     }
     

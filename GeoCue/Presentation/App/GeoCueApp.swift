@@ -20,9 +20,7 @@ struct GeoCueApp: App {
     }
     var body: some Scene {
         WindowGroup {
-            
             MapScreen()
-            
         }
     }
 }

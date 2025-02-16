@@ -68,6 +68,7 @@ class LocationViewModel: ObservableObject {
     }
     
     func saveLocation(_ location: Location, completion: @escaping (Bool) -> Void) {
+        
         isLoading = true
         saveLocationUseCase.execute(location: location)
             .receive(on: DispatchQueue.main)

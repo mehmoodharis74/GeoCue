@@ -32,7 +32,7 @@ extension Container {
     }
     //Location Manager
     var locationManager: Factory<UserLocationManager>{
-        self { UserLocationManager(dataController: self.dataController()) }.singleton
+        self { UserLocationManager(dataController: self.dataController(), notificationManager: self.notificationManager())}.singleton
     }
     
     //Data Sources
@@ -80,7 +80,7 @@ extension Container {
                     saveLocationUseCase: self.saveLocationUseCase(),
                     updateLocationIsActiveUseCase: self.updateLocationIsActiveUseCase()
                 )
-            }
-        }
+            }.singleton
+    }
     
 }

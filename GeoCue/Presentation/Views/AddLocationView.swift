@@ -11,7 +11,7 @@ import Factory
 
 struct AddLocationView: View {
     @Environment(\.dismiss) private var dismiss
-    let location: LocationResponseEntity?
+    @Binding var location: LocationResponseEntity?
     let radius: Double
     // Use the view model from your DI container.
     @StateObject private var viewModel = Container.shared.locationViewModel()
@@ -19,10 +19,10 @@ struct AddLocationView: View {
     @State private var note: String = ""
     @State private var isActive: Bool = false
     
-    init(location: LocationResponseEntity, radius: Double) {
-        self.location = location
-        self.radius = radius
-    }
+    init(location: Binding<LocationResponseEntity?>, radius: Double) {
+            self._location = location
+            self.radius = radius
+        }
     
     var body: some View {
         NavigationView {
@@ -83,6 +83,8 @@ struct AddLocationView: View {
                         // Use the view model's save method instead of calling DataController.
                         viewModel.saveLocation(newLocation) { success in
                             if success {
+                                viewModel.fetchSavedLocations()
+                                location = nil
                                 dismiss()
                             } else {
                                 print("Failed to save location: \(viewModel.errorMessage ?? "Unknown error")")
