@@ -118,7 +118,7 @@ class LocationViewModelTests: XCTestCase {
                                      radius: 75.0,
                                      note: "New note",
                                      isActive: false)
-        // After saving, the view model calls fetchSavedLocations.
+        
         let fakeSaveUseCase = FakeSaveLocationUseCase(result: .success(()))
         let fakeFetchSavedUseCase = FakeFetchSavedLocationsUseCase(result: .success([dummyLocation]))
         let fakeFetchUseCase = FakeFetchLocationsUseCase(result: .success([]))
@@ -128,13 +128,25 @@ class LocationViewModelTests: XCTestCase {
                                           fetchSavedLocationsUseCase: fakeFetchSavedUseCase,
                                           saveLocationUseCase: fakeSaveUseCase,
                                           updateLocationIsActiveUseCase: fakeUpdateUseCase)
-             
-        let expectation = XCTestExpectation(description: "Save location success")
+        
+        let saveExpectation = XCTestExpectation(description: "Save location completed")
+        let fetchExpectation = XCTestExpectation(description: "Saved locations updated")
+        
+        viewModel.$savedLocations
+            .dropFirst() // Skip initial value
+            .sink { locations in
+                if locations.count == 1 && locations.first?.name == "New Location" {
+                    fetchExpectation.fulfill()
+                }
+            }
+            .store(in: &cancellables)
+        
         viewModel.saveLocation(dummyLocation) { success in
             XCTAssertTrue(success)
-            expectation.fulfill()
+            saveExpectation.fulfill()
         }
-        wait(for: [expectation], timeout: 1.0)
+        
+        wait(for: [saveExpectation, fetchExpectation], timeout: 1.0)
         XCTAssertEqual(viewModel.savedLocations.count, 1)
         XCTAssertEqual(viewModel.savedLocations.first?.name, "New Location")
     }
@@ -172,15 +184,6 @@ class LocationViewModelTests: XCTestCase {
     
     // 6. Test successful updateLocationIsActive call
     func testUpdateLocationIsActiveSuccess() {
-        let dummyLocation = Location(id: "1",
-                                     name: "Location",
-                                     latitude: 4.0,
-                                     longitude: 4.0,
-                                     category: "test",
-                                     radius: 65.0,
-                                     note: "Note",
-                                     isActive: false)
-        // After updating, the view model calls fetchSavedLocations returning the updated location
         let updatedLocation = Location(id: "1",
                                        name: "Location",
                                        latitude: 4.0,
@@ -189,6 +192,7 @@ class LocationViewModelTests: XCTestCase {
                                        radius: 65.0,
                                        note: "Note",
                                        isActive: true)
+        
         let fakeUpdateUseCase = FakeUpdateLocationIsActiveUseCase(result: .success(()))
         let fakeFetchSavedUseCase = FakeFetchSavedLocationsUseCase(result: .success([updatedLocation]))
         let fakeFetchUseCase = FakeFetchLocationsUseCase(result: .success([]))
@@ -199,12 +203,26 @@ class LocationViewModelTests: XCTestCase {
                                           saveLocationUseCase: fakeSaveUseCase,
                                           updateLocationIsActiveUseCase: fakeUpdateUseCase)
         
-        let expectation = XCTestExpectation(description: "Update location is active success")
+        // Expectation for the update completion
+        let updateExpectation = XCTestExpectation(description: "Update location is active completed")
+        
+        // Subscribe to published savedLocations
+        let fetchExpectation = XCTestExpectation(description: "Saved locations updated")
+        viewModel.$savedLocations
+            .dropFirst() // Skip any initial empty value
+            .sink { locations in
+                if locations.count == 1 && (locations.first?.isActive ?? false) {
+                    fetchExpectation.fulfill()
+                }
+            }
+            .store(in: &cancellables)
+        
         viewModel.updateLocationIsActive(id: "1", isActive: true) { success in
             XCTAssertTrue(success)
-            expectation.fulfill()
+            updateExpectation.fulfill()
         }
-        wait(for: [expectation], timeout: 1.0)
+        
+        wait(for: [updateExpectation, fetchExpectation], timeout: 1.0)
         XCTAssertEqual(viewModel.savedLocations.count, 1)
         XCTAssertTrue(viewModel.savedLocations.first?.isActive ?? false)
     }
