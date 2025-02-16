@@ -5,57 +5,74 @@
 //  Created by Haris  on 14/02/2025.
 //
 
-import SwiftUI
-import MapKit
 import Combine
 import Factory
+import MapKit
+import SwiftUI
 
 struct MapScreen: View {
     @ObservedObject var viewModel: LocationViewModel = Container.shared.locationViewModel()
     @StateObject private var userLocationManager = Container.shared.locationManager()
-    
+    private var dataController = Container.shared.dataController()
+
     // Use a binding for the camera position so updates animate the map.
     @State private var cameraPosition: MapCameraPosition = .automatic
     @State private var selectedLocation: LocationResponseEntity? = nil
-    @State private var radius: Double = 100 // Default geofence radius in meters
+    @State private var radius: Double = 100  // Default geofence radius in meters
     @State private var showAnnotationsSheet: Bool = false
     @State private var showAddLocationSheet: Bool = false
     @State private var showSavedLocationsSheet: Bool = false
 
-   
     var body: some View {
         ZStack {
             // The Map view using a binding for the camera position.
             Map(position: $cameraPosition, interactionModes: [.all]) {
                 // Place markers for each fetched location.
                 ForEach(viewModel.locations) { location in
-                    Annotation("", coordinate: CLLocationCoordinate2D(latitude: location.latitude,
-                                                                       longitude: location.longitude)) {
+                    Annotation(
+                        "",
+                        coordinate: CLLocationCoordinate2D(
+                            latitude: location.latitude,
+                            longitude: location.longitude)
+                    ) {
                         MarkerView(location: location, isSelected: location == selectedLocation)
                             .onTapGesture {
                                 selectedLocation = location
                                 withAnimation {
                                     // Center the map on the tapped location with a tight span.
-                                    cameraPosition = .region(MKCoordinateRegion(
-                                        center: CLLocationCoordinate2D(latitude: location.latitude,
-                                                                       longitude: location.longitude),
-                                        span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-                                    ))
+                                    cameraPosition = .region(
+                                        MKCoordinateRegion(
+                                            center: CLLocationCoordinate2D(
+                                                latitude: location.latitude,
+                                                longitude: location.longitude),
+                                            span: MKCoordinateSpan(
+                                                latitudeDelta: 0.01, longitudeDelta: 0.01)
+                                        ))
                                 }
                             }
                     }
                     .annotationTitles(.hidden)
                 }
+                ForEach(viewModel.savedLocations, id: \.id) { loc in
+                    Marker(
+                        "\(loc.name)", systemImage: "figure.wave",
+                        coordinate: CLLocationCoordinate2D(
+                            latitude: loc.latitude, longitude: loc.longitude)
+                    )
+                }
+
                 // If a location is selected, show the geofence circle.
                 if let selectedLocation = selectedLocation {
-                    withAnimation{
-                        MapCircle(center: CLLocationCoordinate2D(latitude: selectedLocation.latitude,
-                                                                   longitude: selectedLocation.longitude),
-                                  radius: radius)
-                            .foregroundStyle(.blue.opacity(0.5))
+                    withAnimation {
+                        MapCircle(
+                            center: CLLocationCoordinate2D(
+                                latitude: selectedLocation.latitude,
+                                longitude: selectedLocation.longitude),
+                            radius: radius
+                        )
+                        .foregroundStyle(.blue.opacity(0.5))
                     }
-                    
-                        
+
                 }
                 // Built-in user location annotation.
                 UserAnnotation()
@@ -66,27 +83,32 @@ struct MapScreen: View {
             }
             .mapStyle(.hybrid(elevation: .realistic))
             .onAppear {
-                viewModel.fetchLocations()
+                viewModel.fetchRemoteLocations() //fetch locations from api
+                viewModel.fetchSavedLocations() //fetch locations from database
                 // If no location is selected, center on the first fetched location.
                 if let firstLocation = viewModel.locations.first {
-                    cameraPosition = .region(MKCoordinateRegion(
-                        center: CLLocationCoordinate2D(latitude: firstLocation.latitude,
-                                                       longitude: firstLocation.longitude),
-                        span: MKCoordinateSpan(latitudeDelta: 1, longitudeDelta: 1)
-                    ))
+                    cameraPosition = .region(
+                        MKCoordinateRegion(
+                            center: CLLocationCoordinate2D(
+                                latitude: firstLocation.latitude,
+                                longitude: firstLocation.longitude),
+                            span: MKCoordinateSpan(latitudeDelta: 1, longitudeDelta: 1)
+                        ))
                 }
                 if let userLocation = userLocationManager.location {
-                                   print("User's Current Location on Appear: Latitude = \(userLocation.coordinate.latitude), Longitude = \(userLocation.coordinate.longitude)")
-                               } else {
-                                   print("User's location is not available on appear.")
-                               }
+                    print(
+                        "User's Current Location on Appear: Latitude = \(userLocation.coordinate.latitude), Longitude = \(userLocation.coordinate.longitude)"
+                    )
+                } else {
+                    print("User's location is not available on appear.")
+                }
             }
-            .safeAreaInset(edge: .bottom){
-                
-                HStack(alignment: .bottom){
-                    
+            .safeAreaInset(edge: .bottom) {
+
+                HStack(alignment: .bottom) {
+
                     if selectedLocation != nil {
-                        VStack{
+                        VStack {
                             // Slider for geofence radius with smooth animation.
                             MapCircleSlider(radius: $radius)
                                 .onChange(of: radius) { newRadius, _ in
@@ -95,39 +117,40 @@ struct MapScreen: View {
                                         // Approximate: 1 degree ~ 111km; adjust span based on circle diameter.
                                         let spanDelta = (newRadius * 2) / 55500.0
                                         withAnimation(.easeInOut) {
-                                            cameraPosition = .region(MKCoordinateRegion(
-                                                center: CLLocationCoordinate2D(latitude: sel.latitude,
-                                                                               longitude: sel.longitude),
-                                                span: MKCoordinateSpan(latitudeDelta: spanDelta, longitudeDelta: spanDelta)
-                                            ))
+                                            cameraPosition = .region(
+                                                MKCoordinateRegion(
+                                                    center: CLLocationCoordinate2D(
+                                                        latitude: sel.latitude,
+                                                        longitude: sel.longitude),
+                                                    span: MKCoordinateSpan(
+                                                        latitudeDelta: spanDelta,
+                                                        longitudeDelta: spanDelta)
+                                                ))
                                         }
                                     }
                                 }
                                 .padding()
                                 .transition(.opacity)
                             // HStack with Add Location & Saved Locations buttons.
-                                                    HStack {
-                                                        Button("Clear"){
-                                                                                if selectedLocation != nil {
-                                                                                    withAnimation {
-                                                                                        selectedLocation = nil
-                                                                                        radius = 100
-                                                                                    }
-                                                                                }
-                                                        }
-                                                        Button("Add Location") {
-                                                            showAddLocationSheet = true
-                                                        }
-                                                        
-     
-                                                        
-                                                    }
-                                                    .padding(.bottom, 20)
-                            
-                            
+                            HStack {
+                                Button("Clear") {
+                                    if selectedLocation != nil {
+                                        withAnimation {
+                                            selectedLocation = nil
+                                            radius = 100
+                                        }
+                                    }
+                                }
+                                Button("Add Location") {
+                                    showAddLocationSheet = true
+                                }
+
+                            }
+                            .padding(.bottom, 20)
+
                         }
                     } else {
-                        HStack{
+                        HStack {
                             Button("Show Annotations") {
                                 showAnnotationsSheet = true
                             }
@@ -136,36 +159,35 @@ struct MapScreen: View {
 
                                 showSavedLocationsSheet = true
                             }
-                            Button("Clear"){
-                                                                do {
-                                                                    try DataController().clearAllLocations()
-                                                                } catch {
-                                                                    print("Error updating location: \(error)")
-                                                                }
+                            Button("Clear") {
+                                do {
+                                    try DataController().clearAllLocations()
+                                } catch {
+                                    print("Error updating location: \(error)")
+                                }
                             }
                         }
                         .padding()
-                        
+
                     }
                 }
                 .frame(maxWidth: .infinity)
                 .background(.thinMaterial)
-                
+
             }
             // Attach a tap gesture to the Map view background.
-//            .simultaneousGesture(
-//                TapGesture().onEnded {
-//                    // Clear selection only if a marker is currently selected.
-//                    if selectedLocation != nil {
-//                        withAnimation {
-//                            selectedLocation = nil
-//                            radius = 100
-//                        }
-//                    }
-//                }
-//            )
-            
-            
+            //            .simultaneousGesture(
+            //                TapGesture().onEnded {
+            //                    // Clear selection only if a marker is currently selected.
+            //                    if selectedLocation != nil {
+            //                        withAnimation {
+            //                            selectedLocation = nil
+            //                            radius = 100
+            //                        }
+            //                    }
+            //                }
+            //            )
+
         }
         // Present the half sheet listing all annotations.
         .sheet(isPresented: $showAnnotationsSheet) {
@@ -173,33 +195,33 @@ struct MapScreen: View {
                 // Callback: when a location is tapped in the sheet, update the map.
                 selectedLocation = selected
                 withAnimation {
-                    cameraPosition = .region(MKCoordinateRegion(
-                        center: CLLocationCoordinate2D(latitude: selected.latitude, longitude: selected.longitude),
-                        span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-                    ))
+                    cameraPosition = .region(
+                        MKCoordinateRegion(
+                            center: CLLocationCoordinate2D(
+                                latitude: selected.latitude, longitude: selected.longitude),
+                            span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                        ))
                     showAnnotationsSheet = false
                 }
             }
             .presentationDetents([.medium, .large])
         }
         .fullScreenCover(isPresented: $showAddLocationSheet) {
-                    AddLocationView(location: selectedLocation!, radius: radius)
-                }
-        .fullScreenCover(isPresented: $showSavedLocationsSheet) {
+            AddLocationView(location: selectedLocation!, radius: radius)
+        }
+        .sheet(isPresented: $showSavedLocationsSheet) {
             SavedLocationsView()
-                }
+        }
     }
+    
 }
-
-
-
 
 // MARK: - AnnotationsSheet
 
 struct AnnotationsSheet: View {
     var locations: [LocationResponseEntity]
     var onSelect: (LocationResponseEntity) -> Void  // Callback when a location is tapped.
-    
+
     var body: some View {
         NavigationView {
             List(locations) { location in
@@ -210,12 +232,10 @@ struct AnnotationsSheet: View {
                         .foregroundColor(.primary)
                 }
             }
-            .navigationTitle("Locations")
+            .navigationTitle("Annotations").font(.headline)
         }
     }
 }
-
-
 
 #Preview {
     MapScreen()

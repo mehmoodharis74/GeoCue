@@ -37,22 +37,50 @@ extension Container {
     
     //Data Sources
     var locationDataSource: Factory<LocationDataSource>{
-        self { RemoteLocationDataSource(apiClient: self.apiClient(), baseURL: "https://run.mocky.io")} 
+        self { RemoteLocationDataSource(apiClient: self.apiClient(), baseURL: "https://run.mocky.io")}
+    
     }
+    var localLocationDataSource: Factory<LocalLocationDataSource> {
+            self { LocalLocationDataSourceImpl(dataController: self.dataController()) }.singleton
+        }
+        
+        
+        
+        
     
     //Repositories
     var locationRepository: Factory<LocationRepository>{
         self { locationRepositoryImp(dataSource: self.locationDataSource())}
+    }
+    var localLocationRepository: Factory<LocalLocationRepository> {
+        self { LocalLocationRepositoryImpl(localDataSource: self.localLocationDataSource()) }.singleton
     }
     
     //UseCases
     var fetchLocationUseCase: Factory<FetchLocationsUseCase>{
         self { FetchLocationsUseCase(repository: self.locationRepository())}
     }
+    var fetchSavedLocationsUseCase: Factory<FetchSavedLocationsUseCase> {
+        self { FetchSavedLocationsUseCase(repository: self.localLocationRepository()) }
+    }
+    var saveLocationUseCase: Factory<SaveLocationUseCase> {
+            self { SaveLocationUseCase(repository: self.localLocationRepository()) }
+    }
+        
+    var updateLocationIsActiveUseCase: Factory<UpdateLocationIsActiveUseCase> {
+            self { UpdateLocationIsActiveUseCase(repository: self.localLocationRepository()) }
+    }
     
     //ViewModel
-    var locationViewModel: Factory<LocationViewModel>{
-        self { LocationViewModel(fetchLocationsUseCase: self.fetchLocationUseCase())}
-    }
+    var locationViewModel: Factory<LocationViewModel> {
+            self {
+                LocationViewModel(
+                    fetchLocationsUseCase: self.fetchLocationUseCase(),
+                    fetchSavedLocationsUseCase: self.fetchSavedLocationsUseCase(),
+                    saveLocationUseCase: self.saveLocationUseCase(),
+                    updateLocationIsActiveUseCase: self.updateLocationIsActiveUseCase()
+                )
+            }
+        }
     
 }

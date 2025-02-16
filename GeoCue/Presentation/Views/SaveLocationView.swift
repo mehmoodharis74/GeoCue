@@ -6,18 +6,26 @@
 //
 
 import SwiftUI
+import Factory
 
 struct SavedLocationsView: View {
     // We'll load saved locations from persistent storage using DataController.
-    @State private var savedLocations: [Location] = []
     @Environment(\.dismiss) private var dismiss
+    private let dataController: DataController
+    @ObservedObject private var viewModel: LocationViewModel
+    
+    init(dataController: DataController = Container.shared.dataController(),
+         viewModel:LocationViewModel = Container.shared.locationViewModel()){
+        self.dataController = dataController
+        self.viewModel = viewModel
+    }
 
     var body: some View {
         NavigationView {
-            List(savedLocations, id: \.id) { location in
+            List(viewModel.savedLocations, id: \.id) { location in
                 SavedLocationRow(location: location)
             }
-            .navigationTitle("Saved Locations")
+            .navigationTitle("Saved Locations").font(.subheadline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Close") {
@@ -26,18 +34,10 @@ struct SavedLocationsView: View {
                 }
             }
             .onAppear {
-                loadLocations()
+                if (viewModel.savedLocations.isEmpty){
+                    viewModel.fetchSavedLocations()
+                }
             }
-        }
-    }
-    
-    private func loadLocations() {
-        do {
-            // Create a DataController instance and fetch saved locations.
-            let controller = DataController()
-            savedLocations = try controller.fetchLocations()
-        } catch {
-            print("Error loading saved locations: \(error)")
         }
     }
 }
@@ -45,12 +45,14 @@ struct SavedLocationsView: View {
 private struct SavedLocationRow: View {
     let location: Location
     @State private var isActive: Bool
-    private let dataController = DataController()
+    private let viewModel: LocationViewModel
+
+    init(location: Location, viewModel: LocationViewModel = Container.shared.locationViewModel()) {
+            self.location = location
+            _isActive = State(initialValue: location.isActive)
+            self.viewModel = viewModel
+        }
     
-    init(location: Location) {
-        self.location = location
-        _isActive = State(initialValue: location.isActive)
-    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
@@ -61,24 +63,26 @@ private struct SavedLocationRow: View {
                 Spacer()
                 Toggle("Active", isOn: $isActive)
                     .labelsHidden()
-                    .onChange(of: isActive) {_ , newValue in
-                        do {
-                            try dataController.updateLocationIsActive(id: location.id, isActive: newValue)
-                        } catch {
-                            print("Error updating location: \(error)")
-                        }
-                    }
+                    .onChange(of: isActive) { _, newValue in
+                                            viewModel.updateLocationIsActive(id: location.id, isActive: newValue) { success in
+                                                if !success {
+                                                    print("Error updating location: \(viewModel.errorMessage ?? "Unknown error")")
+                                                    // Optionally revert the toggle if update fails.
+                                                    isActive = location.isActive
+                                                }
+                                            }
+                                        }
             }
-            Text(String(format: "%.6f", location.latitude))
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-            Text(String(format: "%.6f", location.longitude))
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-            // Below: Radius and note.
-            Text("Radius: \(Int(location.radius)) m")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+            HStack(){
+                Text("Coordinates")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                Text("\(String(format: "%.6f", location.latitude)), \(String(format: "%.6f", location.longitude))")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                Spacer()
+            }.frame(maxWidth: .infinity)
+            
             Text("Note: \(location.note)")
                 .font(.subheadline)
                 .foregroundColor(.secondary)

@@ -7,17 +7,19 @@
 
 import SwiftUI
 import MapKit
+import Factory
 
 struct AddLocationView: View {
     @Environment(\.dismiss) private var dismiss
     let location: LocationResponseEntity?
     let radius: Double
-    let dataController: DataController
+    // Use the view model from your DI container.
+    @StateObject private var viewModel = Container.shared.locationViewModel()
+    
     @State private var note: String = ""
     @State private var isActive: Bool = false
     
-    init(location: LocationResponseEntity, radius: Double, dataController: DataController = DataController()){
-        self.dataController = dataController
+    init(location: LocationResponseEntity, radius: Double) {
         self.location = location
         self.radius = radius
     }
@@ -46,10 +48,10 @@ struct AddLocationView: View {
                         Spacer()
                         Text("\(Int(radius)) m")
                     }
-                    HStack{
+                    HStack {
                         Text("Active")
                         Spacer()
-                        Toggle("",isOn: $isActive).labelsHidden()
+                        Toggle("", isOn: $isActive).labelsHidden()
                     }
                 }
                 Section(header: Text("Enter your note")) {
@@ -78,12 +80,13 @@ struct AddLocationView: View {
                             isActive: isActive
                         )
                         
-                        do {
-                            // Save the location using your DataController.
-                            try dataController.saveLocation(newLocation)
-                            dismiss()
-                        } catch {
-                            print("Error saving location: \(error)")
+                        // Use the view model's save method instead of calling DataController.
+                        viewModel.saveLocation(newLocation) { success in
+                            if success {
+                                dismiss()
+                            } else {
+                                print("Failed to save location: \(viewModel.errorMessage ?? "Unknown error")")
+                            }
                         }
                     }
                 }

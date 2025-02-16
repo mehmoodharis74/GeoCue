@@ -83,34 +83,31 @@ import Foundation
 import SwiftUI
 import CoreLocation
 import Factory
-
-
+import Combine
 
 final class UserLocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var location: CLLocation? = nil
     @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
     private let locationManager: CLLocationManager
     private let dataController: DataController
+    private var cancellables = Set<AnyCancellable>()
+    
+    // Cache for saved locations fetched via the use case.
+    private var savedLocationsCache: [Location] = []
     
     public init(dataController: DataController) {
-        locationManager = CLLocationManager()
-        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        self.locationManager = CLLocationManager()
+        self.locationManager.desiredAccuracy = kCLLocationAccuracyBest
         self.dataController = dataController
-
-//        // Request notifications authorization.
-//        NotificationManager.shared.requestAuthorization()
+        super.init()
     }
     
-    
-    
-    
     func checkLocationAuthorization() {
-        
         locationManager.delegate = self
         locationManager.startUpdatingLocation()
         
         switch locationManager.authorizationStatus {
-        case .notDetermined://The user choose allow or denny your app to get the location yet
+        case .notDetermined:
             locationManager.requestWhenInUseAuthorization()
             
         case .restricted:
@@ -129,36 +126,39 @@ final class UserLocationManager: NSObject, ObservableObject, CLLocationManagerDe
             
         @unknown default:
             print("Location service disabled")
-        
         }
         locationManager.allowsBackgroundLocationUpdates = true
         locationManager.pausesLocationUpdatesAutomatically = false
-        
     }
     
     // MARK: - Region Monitoring for Active Locations
     func startMonitoringActiveLocations() {
-            // Fetch active locations from Core Data using DataController.
-            do {
-                let allLocations = try dataController.fetchLocations()
-                let activeLocations = allLocations.filter { $0.isActive }
+        Container.shared.fetchSavedLocationsUseCase().execute()
+            .receive(on: DispatchQueue.main)
+            .sink { completion in
+                if case .failure(let error) = completion {
+                    print("Error fetching active locations for monitoring: \(error)")
+                }
+            } receiveValue: { [weak self] locations in
+                guard let self = self else { return }
+                // Update the cache with all saved locations from the use case.
+                self.savedLocationsCache = locations
+                let activeLocations = locations.filter { $0.isActive }
                 for loc in activeLocations {
                     let center = CLLocationCoordinate2D(latitude: loc.latitude, longitude: loc.longitude)
                     let region = CLCircularRegion(center: center, radius: loc.radius, identifier: loc.id)
                     region.notifyOnEntry = true
                     region.notifyOnExit  = true
-                    if !locationManager.monitoredRegions.contains(where: { ($0.identifier) == loc.id }) {
-                        locationManager.startMonitoring(for: region)
+                    if !self.locationManager.monitoredRegions.contains(where: { $0.identifier == loc.id }) {
+                        self.locationManager.startMonitoring(for: region)
                         print("Started monitoring region for \(loc.name)")
                     }
                 }
-            } catch {
-                print("Error fetching active locations for monitoring: \(error)")
             }
-        }
+            .store(in: &cancellables)
+    }
     
     // MARK: - CLLocationManagerDelegate Methods
-    
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let newLoc = locations.last else { return }
         DispatchQueue.main.async {
@@ -178,37 +178,28 @@ final class UserLocationManager: NSObject, ObservableObject, CLLocationManagerDe
     
     // Called when the user enters a monitored region.
     func locationManager(_ manager: CLLocationManager, didEnterRegion region: CLRegion) {
-        if let circularRegion = region as? CLCircularRegion {
-            if let activeLoc = self.activeLocation(for: circularRegion.identifier) {
-                let title = "Inside \(activeLoc.name)"
-                let body = activeLoc.note
-                NotificationManager.shared.sendNotification(title: title, body: body)
-                print("Entered region for \(activeLoc.name)")
-            }
-        }
+        guard let circularRegion = region as? CLCircularRegion,
+              let activeLoc = activeLocation(for: circularRegion.identifier) else { return }
+              
+        let title = "Inside \(activeLoc.name)"
+        let body = activeLoc.note
+        NotificationManager.shared.sendNotification(title: title, body: body)
+        print("Entered region for \(activeLoc.name)")
     }
     
     // Called when the user exits a monitored region.
     func locationManager(_ manager: CLLocationManager, didExitRegion region: CLRegion) {
-        if let circularRegion = region as? CLCircularRegion {
-            if let activeLoc = self.activeLocation(for: circularRegion.identifier) {
-                let title = "Outside \(activeLoc.name)"
-                let body = activeLoc.note
-                NotificationManager.shared.sendNotification(title: title, body: body)
-                print("Exited region for \(activeLoc.name)")
-            }
-        }
+        guard let circularRegion = region as? CLCircularRegion,
+              let activeLoc = activeLocation(for: circularRegion.identifier) else { return }
+              
+        let title = "Outside \(activeLoc.name)"
+        let body = activeLoc.note
+        NotificationManager.shared.sendNotification(title: title, body: body)
+        print("Exited region for \(activeLoc.name)")
     }
     
-    // Helper: fetch active location by id from persistent storage.
+    // Updated activeLocation using the cached saved locations from the use case.
     private func activeLocation(for id: String) -> Location? {
-        let controller = DataController()
-        do {
-            let allLocations = try controller.fetchLocations()
-            return allLocations.first(where: { $0.id == id && $0.isActive })
-        } catch {
-            print("Error fetching active location: \(error)")
-            return nil
-        }
+        return savedLocationsCache.first { $0.id == id && $0.isActive }
     }
 }

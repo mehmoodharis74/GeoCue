@@ -11,7 +11,7 @@ struct DataController {
     
     let container: NSPersistentContainer
     
-    init(inMemory: Bool = false) {
+    public init(inMemory: Bool = false) {
         container = NSPersistentContainer(name: "GeoCue")
         if inMemory {
             container.persistentStoreDescriptions.first?.url = URL(fileURLWithPath: "/dev/null")
@@ -24,58 +24,35 @@ struct DataController {
         container.viewContext.automaticallyMergesChangesFromParent = true
     }
     
-    func saveLocation(_ location: Location) throws {
-        let context = container.viewContext
-        let locationEntity = LocationItem(context: context)
-        locationEntity.id = location.id
-        locationEntity.name = location.name
-        locationEntity.latitude = location.latitude
-        locationEntity.longitude = location.longitude
-        locationEntity.category = location.category
-        locationEntity.radius = location.radius
-        locationEntity.note = location.note
-        locationEntity.isActive = location.isActive
-
-        do {
-            try context.save()
-        } catch {
-            throw error
-        }
-    }
+//    func saveLocation(_ location: Location) throws {
+//        let context = container.viewContext
+//        let locationEntity = LocationItem(context: context)
+//        locationEntity.id = location.id
+//        locationEntity.name = location.name
+//        locationEntity.latitude = location.latitude
+//        locationEntity.longitude = location.longitude
+//        locationEntity.category = location.category
+//        locationEntity.radius = location.radius
+//        locationEntity.note = location.note
+//        locationEntity.isActive = location.isActive
+//
+//        do {
+//            try context.save()
+//        } catch {
+//            throw error
+//        }
+//    }
     
-    func fetchLocations() throws -> [Location] {
-        let context = container.viewContext
-        let fetchRequest: NSFetchRequest<LocationItem> = LocationItem.fetchRequest()
-        
-        do {
-            let locationEntities = try context.fetch(fetchRequest)
-            // Map each LocationItem to your Location model.
-            return locationEntities.map { entity in
-                Location(
-                    id: entity.id ?? "",
-                    name: entity.name ?? "",
-                    latitude: entity.latitude,
-                    longitude: entity.longitude,
-                    category: entity.category ?? "",
-                    radius: entity.radius,
-                    note: entity.note ?? "",
-                    isActive: entity.isActive
-                )
-            }
-        } catch {
-            throw error
-        }
-    }
-    func updateLocationIsActive(id: String, isActive: Bool) throws {
-            let context = container.viewContext
-            let fetchRequest: NSFetchRequest<LocationItem> = LocationItem.fetchRequest()
-            fetchRequest.predicate = NSPredicate(format: "id == %@", id)
-            let results = try context.fetch(fetchRequest)
-            if let locationEntity = results.first {
-                locationEntity.isActive = isActive
-                try context.save()
-            }
-        }
+//    func updateLocationIsActive(id: String, isActive: Bool) throws {
+//            let context = container.viewContext
+//            let fetchRequest: NSFetchRequest<LocationItem> = LocationItem.fetchRequest()
+//            fetchRequest.predicate = NSPredicate(format: "id == %@", id)
+//            let results = try context.fetch(fetchRequest)
+//            if let locationEntity = results.first {
+//                locationEntity.isActive = isActive
+//                try context.save()
+//            }
+//        }
     func clearAllLocations() throws {
             let context = container.viewContext
             let fetchRequest: NSFetchRequest<NSFetchRequestResult> = LocationItem.fetchRequest()
