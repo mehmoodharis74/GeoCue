@@ -12,8 +12,7 @@ import Factory
 
 struct MapScreen: View {
     @ObservedObject var viewModel: LocationViewModel = Container.shared.locationViewModel()
-    @StateObject private var permissionViewModel = PermissionsViewModel()
-    @StateObject private var userLocationManager = UserLocationManager()
+    @StateObject private var userLocationManager = Container.shared.locationManager()
     
     // Use a binding for the camera position so updates animate the map.
     @State private var cameraPosition: MapCameraPosition = .automatic

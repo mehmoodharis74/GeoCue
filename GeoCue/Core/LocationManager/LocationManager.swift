@@ -82,6 +82,7 @@ import Foundation
 
 import SwiftUI
 import CoreLocation
+import Factory
 
 
 
@@ -89,15 +90,15 @@ final class UserLocationManager: NSObject, ObservableObject, CLLocationManagerDe
     @Published var location: CLLocation? = nil
     @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
     private let locationManager: CLLocationManager
+    private let dataController: DataController
     
-    override init() {
+    public init(dataController: DataController) {
         locationManager = CLLocationManager()
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
-        super.init()
-        self.checkLocationAuthorization()
+        self.dataController = dataController
 
-        // Request notifications authorization.
-        NotificationManager.shared.requestAuthorization()
+//        // Request notifications authorization.
+//        NotificationManager.shared.requestAuthorization()
     }
     
     
@@ -112,17 +113,17 @@ final class UserLocationManager: NSObject, ObservableObject, CLLocationManagerDe
         case .notDetermined://The user choose allow or denny your app to get the location yet
             locationManager.requestWhenInUseAuthorization()
             
-        case .restricted://The user cannot change this app’s status, possibly due to active restrictions such as parental controls being in place.
+        case .restricted:
             print("Location restricted")
             
-        case .denied://The user dennied your app to get location or disabled the services location or the phone is in airplane mode
+        case .denied:
             print("Location denied")
             
-        case .authorizedAlways://This authorization allows you to use all location services and receive location events whether or not your app is in use.
+        case .authorizedAlways:
             print("Location authorizedAlways")
             startMonitoringActiveLocations()
             
-        case .authorizedWhenInUse://This authorization allows you to use all location services and receive location events only when your app is in use
+        case .authorizedWhenInUse:
             print("Location authorized when in use")
             locationManager.requestAlwaysAuthorization()
             
@@ -136,13 +137,10 @@ final class UserLocationManager: NSObject, ObservableObject, CLLocationManagerDe
     }
     
     // MARK: - Region Monitoring for Active Locations
-    
-    /// Call this method to fetch active locations from persistent storage and start monitoring them.
     func startMonitoringActiveLocations() {
             // Fetch active locations from Core Data using DataController.
-            let controller = DataController()
             do {
-                let allLocations = try controller.fetchLocations()
+                let allLocations = try dataController.fetchLocations()
                 let activeLocations = allLocations.filter { $0.isActive }
                 for loc in activeLocations {
                     let center = CLLocationCoordinate2D(latitude: loc.latitude, longitude: loc.longitude)

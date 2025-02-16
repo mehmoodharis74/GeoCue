@@ -21,6 +21,20 @@ extension Container {
         self { GeoCueAPIClient(session: self.session())}.singleton
     }
     
+    //DataController
+    var dataController: Factory<DataController>{
+        self { DataController() }.singleton
+    }
+    
+    //Notification Manager
+    var notificationManager: Factory<NotificationManager>{
+        self { NotificationManager() }.singleton
+    }
+    //Location Manager
+    var locationManager: Factory<UserLocationManager>{
+        self { UserLocationManager(dataController: self.dataController()) }.singleton
+    }
+    
     //Data Sources
     var locationDataSource: Factory<LocationDataSource>{
         self { RemoteLocationDataSource(apiClient: self.apiClient(), baseURL: "https://run.mocky.io")} 

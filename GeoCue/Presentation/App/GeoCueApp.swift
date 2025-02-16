@@ -11,12 +11,15 @@ import Combine
 
 @main
 struct GeoCueApp: App {
-    @State private var cancellables = Set<AnyCancellable>()
-
-
+    var notificationManager : NotificationManager = Container.shared.notificationManager()
+    var locationManager: UserLocationManager = Container.shared.locationManager()
+    
+    init(){
+        notificationManager.requestAuthorization()
+        locationManager.checkLocationAuthorization()
+    }
     var body: some Scene {
         WindowGroup {
-            // Call the use case
             
             MapScreen()
             
